@@ -9,11 +9,13 @@ import {
   loadSaveBundle,
   type SaveBundle,
 } from '../db/saves'
+import { buyClub, sellClub } from '../db/transactions'
 
 interface GameState {
   saves: SaveGame[]
   activeBundle: SaveBundle | null
   loading: boolean
+  error: string | null
   refreshSaves: () => Promise<void>
   newSave: (name: string) => Promise<void>
   openSave: (saveId: string) => Promise<void>
@@ -21,12 +23,16 @@ interface GameState {
   closeSave: () => void
   exportActiveSave: () => Promise<string>
   importSave: (json: string) => Promise<void>
+  buyClub: (clubId: string) => Promise<void>
+  sellClub: () => Promise<void>
+  clearError: () => void
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
   saves: [],
   activeBundle: null,
   loading: false,
+  error: null,
 
   refreshSaves: async () => {
     const saves = await listSaves()
@@ -64,4 +70,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     await importSaveFromJson(json)
     await get().refreshSaves()
   },
+
+  buyClub: async (clubId: string) => {
+    const saveId = get().activeBundle?.save.id
+    if (!saveId) return
+    try {
+      await buyClub(saveId, clubId)
+      const bundle = await loadSaveBundle(saveId)
+      set({ activeBundle: bundle ?? null, error: null })
+      await get().refreshSaves()
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : String(err) })
+    }
+  },
+
+  sellClub: async () => {
+    const saveId = get().activeBundle?.save.id
+    if (!saveId) return
+    try {
+      await sellClub(saveId)
+      const bundle = await loadSaveBundle(saveId)
+      set({ activeBundle: bundle ?? null, error: null })
+      await get().refreshSaves()
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : String(err) })
+    }
+  },
+
+  clearError: () => set({ error: null }),
 }))

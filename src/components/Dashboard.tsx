@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGameStore } from '../state/useGameStore'
 import type { Country } from '../types/models'
+import { MyClubPanel } from './MyClubPanel'
 
 function downloadFile(filename: string, contents: string) {
   const blob = new Blob([contents], { type: 'application/json' })
@@ -16,6 +17,10 @@ export function Dashboard() {
   const bundle = useGameStore((s) => s.activeBundle)
   const closeSave = useGameStore((s) => s.closeSave)
   const exportActiveSave = useGameStore((s) => s.exportActiveSave)
+  const buyClub = useGameStore((s) => s.buyClub)
+  const sellClub = useGameStore((s) => s.sellClub)
+  const error = useGameStore((s) => s.error)
+  const clearError = useGameStore((s) => s.clearError)
   const [country, setCountry] = useState<Country | 'All'>('All')
 
   if (!bundle) return null
@@ -25,9 +30,23 @@ export function Dashboard() {
     .filter((l) => country === 'All' || l.country === country)
     .sort((a, b) => a.country.localeCompare(b.country) || a.tier - b.tier)
 
+  const ownedClub = bundle.save.ownedClubId
+    ? bundle.clubs.find((c) => c.id === bundle.save.ownedClubId)
+    : undefined
+  const ownedStadium = ownedClub
+    ? bundle.stadiums.find((s) => s.clubId === ownedClub.id)
+    : undefined
+
   async function handleExport() {
     const json = await exportActiveSave()
     downloadFile(`${bundle!.save.name.replace(/\s+/g, '-').toLowerCase()}.json`, json)
+  }
+
+  function handleSell() {
+    if (!ownedClub) return
+    if (window.confirm(`Sell ${ownedClub.name}? You'll get back part of its asking price.`)) {
+      sellClub()
+    }
   }
 
   return (
@@ -36,7 +55,7 @@ export function Dashboard() {
       <div className="flex items-start justify-between gap-4 border-t-4 border-b-4 border-[var(--color-pitch)] bg-[var(--color-surface)] px-5 py-4">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-chalk-dim)]">
-            {bundle.save.ownedClubId ? 'Club owned' : 'Free agent owner'}
+            {ownedClub ? 'Club owned' : 'Free agent owner'}
           </div>
           <h1 className="font-display text-3xl leading-none text-[var(--color-chalk)]">
             {bundle.save.name}
@@ -66,6 +85,21 @@ export function Dashboard() {
           Back to saves
         </button>
       </div>
+
+      {error && (
+        <div className="mt-3 flex items-center justify-between rounded border border-[var(--color-card-red)]/40 bg-[var(--color-card-red)]/10 px-3 py-2 text-xs text-[var(--color-card-red)]">
+          <span>{error}</span>
+          <button onClick={clearError} className="cursor-pointer font-semibold hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {ownedClub && (
+        <div className="mt-6">
+          <MyClubPanel club={ownedClub} stadium={ownedStadium} onSell={handleSell} />
+        </div>
+      )}
 
       {/* Channel tabs */}
       <div className="mt-8 flex flex-wrap gap-1 border-b border-[var(--color-line)]">
@@ -103,23 +137,51 @@ export function Dashboard() {
                     <th className="py-1.5 text-right font-medium">Rep</th>
                     <th className="font-mono-num py-1.5 text-right font-medium">Balance</th>
                     <th className="font-mono-num py-1.5 text-right font-medium">Asking</th>
+                    <th className="py-1.5 text-right font-medium" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-line)]">
-                  {clubs.map((club) => (
-                    <tr key={club.id} className="transition-standard hover:bg-white/[0.03]">
-                      <td className="py-1.5 text-[var(--color-chalk)]">{club.name}</td>
-                      <td className="font-mono-num py-1.5 text-right text-[var(--color-chalk-dim)]">
-                        {club.reputation}
-                      </td>
-                      <td className="font-mono-num py-1.5 text-right text-[var(--color-chalk-dim)]">
-                        ${club.balance.toLocaleString()}
-                      </td>
-                      <td className="font-mono-num led-amber py-1.5 text-right">
-                        ${club.askingPrice.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
+                  {clubs.map((club) => {
+                    const isMine = club.id === bundle.save.ownedClubId
+                    const canAfford = bundle.save.cash >= club.askingPrice
+                    const canBuy = !bundle.save.ownedClubId && !club.ownedByPlayer && canAfford
+                    return (
+                      <tr key={club.id} className="transition-standard hover:bg-white/[0.03]">
+                        <td className="py-1.5 text-[var(--color-chalk)]">{club.name}</td>
+                        <td className="font-mono-num py-1.5 text-right text-[var(--color-chalk-dim)]">
+                          {club.reputation}
+                        </td>
+                        <td className="font-mono-num py-1.5 text-right text-[var(--color-chalk-dim)]">
+                          ${club.balance.toLocaleString()}
+                        </td>
+                        <td className="font-mono-num led-amber py-1.5 text-right">
+                          ${club.askingPrice.toLocaleString()}
+                        </td>
+                        <td className="py-1.5 text-right">
+                          {isMine ? (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-floodlight)]">
+                              Owned
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => buyClub(club.id)}
+                              disabled={!canBuy}
+                              title={
+                                bundle.save.ownedClubId
+                                  ? 'Sell your club first'
+                                  : !canAfford
+                                    ? 'Not enough cash'
+                                    : undefined
+                              }
+                              className="transition-standard cursor-pointer rounded border border-[var(--color-pitch)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-pitch)] hover:bg-[var(--color-pitch)] hover:text-[var(--color-night)] disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:text-[var(--color-chalk-dim)] disabled:hover:bg-transparent"
+                            >
+                              Buy
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
