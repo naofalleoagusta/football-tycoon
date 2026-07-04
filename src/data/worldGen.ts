@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import type { Club, League, LeagueTier, Stadium } from '../types/models'
-import { mulberry32, randomInRange } from '../lib/rng'
+import { mulberry32 } from '../lib/rng'
 import { LEAGUE_SEEDS } from './clubSeed'
 
 export interface GeneratedWorld {
@@ -58,6 +58,19 @@ const TIER_RANGES: Record<LeagueTier, TierRange> = {
   },
 }
 
+/** Jitter as a fraction of the tier range width, so stature mostly holds but two
+ *  clubs of similar prestige can still swap places run to run. */
+const JITTER_FRACTION = 0.05
+
+/** Scales a stat by real-world prestige within a tier's range, so a big name
+ *  can't randomly land below a small one — with a little noise on top. */
+function fromPrestige(rng: () => number, prestige: number, [min, max]: [number, number]): number {
+  const width = max - min
+  const base = min + prestige * width
+  const noise = (rng() - 0.5) * 2 * JITTER_FRACTION * width
+  return Math.round(Math.min(max, Math.max(min, base + noise)))
+}
+
 /** Builds a fresh league/club/stadium world for one save, deterministic from its seed. */
 export function generateWorld(saveId: string, seed: number): GeneratedWorld {
   const rng = mulberry32(seed)
@@ -77,11 +90,12 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
 
     const range = TIER_RANGES[leagueSeed.tier]
 
-    for (const clubName of leagueSeed.clubs) {
-      const reputation = randomInRange(rng, ...range.reputation)
-      const balance = randomInRange(rng, ...range.balance)
+    for (const clubSeed of leagueSeed.clubs) {
+      const { prestige } = clubSeed
+      const reputation = fromPrestige(rng, prestige, range.reputation)
+      const balance = fromPrestige(rng, prestige, range.balance)
       const askingPrice = range.askingPrice
-        ? randomInRange(rng, ...range.askingPrice)
+        ? fromPrestige(rng, prestige, range.askingPrice)
         : Math.round(balance * 2.5 + reputation * 250_000)
 
       const stadiumId = nanoid()
@@ -90,7 +104,7 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
       clubs.push({
         id: clubId,
         saveId,
-        name: clubName,
+        name: clubSeed.name,
         country: leagueSeed.country,
         leagueId: league.id,
         tier: leagueSeed.tier,
@@ -105,10 +119,10 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
         id: stadiumId,
         saveId,
         clubId,
-        capacity: randomInRange(rng, ...range.capacity),
-        ticketPrice: randomInRange(rng, ...range.ticketPrice),
-        pitchQuality: randomInRange(rng, ...range.pitchQuality),
-        facilityQuality: randomInRange(rng, ...range.facilityQuality),
+        capacity: fromPrestige(rng, prestige, range.capacity),
+        ticketPrice: fromPrestige(rng, prestige, range.ticketPrice),
+        pitchQuality: fromPrestige(rng, prestige, range.pitchQuality),
+        facilityQuality: fromPrestige(rng, prestige, range.facilityQuality),
       })
     }
   }

@@ -18,7 +18,3 @@ export function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
-
-export function randomInRange(rng: () => number, min: number, max: number): number {
-  return Math.round(min + rng() * (max - min))
-}
