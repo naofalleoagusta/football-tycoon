@@ -1,0 +1,186 @@
+import type { Country, LeagueTier } from '../types/models'
+
+export interface LeagueSeed {
+  country: Country
+  tier: LeagueTier
+  name: string
+  clubs: string[]
+}
+
+/**
+ * Curated real club names, top 5 European leagues, top flight + one
+ * promotion/relegation feeder tier each. Snapshot of well-known clubs, not
+ * a guaranteed current-season table — expandable in this file.
+ */
+export const LEAGUE_SEEDS: LeagueSeed[] = [
+  {
+    country: 'England',
+    tier: 1,
+    name: 'Premier League',
+    clubs: [
+      'Arsenal',
+      'Chelsea',
+      'Liverpool',
+      'Manchester City',
+      'Manchester United',
+      'Tottenham Hotspur',
+      'Newcastle United',
+      'Aston Villa',
+      'West Ham United',
+      'Everton',
+      'Brighton & Hove Albion',
+      'Wolverhampton Wanderers',
+    ],
+  },
+  {
+    country: 'England',
+    tier: 2,
+    name: 'Championship',
+    clubs: [
+      'Leeds United',
+      'Sunderland',
+      'Norwich City',
+      'West Bromwich Albion',
+      'Sheffield United',
+      'Middlesbrough',
+      'Coventry City',
+      'Watford',
+    ],
+  },
+  {
+    country: 'Spain',
+    tier: 1,
+    name: 'La Liga',
+    clubs: [
+      'Real Madrid',
+      'Barcelona',
+      'Atletico Madrid',
+      'Sevilla',
+      'Real Sociedad',
+      'Real Betis',
+      'Villarreal',
+      'Athletic Bilbao',
+      'Valencia',
+      'Celta Vigo',
+      'Getafe',
+      'Girona',
+    ],
+  },
+  {
+    country: 'Spain',
+    tier: 2,
+    name: 'Segunda División',
+    clubs: [
+      'Racing Santander',
+      'Real Zaragoza',
+      'Sporting Gijón',
+      'Real Oviedo',
+      'Eibar',
+      'Elche',
+      'Levante',
+      'Cádiz',
+    ],
+  },
+  {
+    country: 'Italy',
+    tier: 1,
+    name: 'Serie A',
+    clubs: [
+      'Juventus',
+      'Inter Milan',
+      'AC Milan',
+      'Napoli',
+      'AS Roma',
+      'Lazio',
+      'Atalanta',
+      'Fiorentina',
+      'Bologna',
+      'Torino',
+      'Genoa',
+      'Sassuolo',
+    ],
+  },
+  {
+    country: 'Italy',
+    tier: 2,
+    name: 'Serie B',
+    clubs: [
+      'Palermo',
+      'Bari',
+      'Cremonese',
+      'Sampdoria',
+      'Spezia',
+      'Modena',
+      'Catanzaro',
+      'Brescia',
+    ],
+  },
+  {
+    country: 'France',
+    tier: 1,
+    name: 'Ligue 1',
+    clubs: [
+      'Paris Saint-Germain',
+      'Marseille',
+      'Lyon',
+      'Monaco',
+      'Lille',
+      'Nice',
+      'Rennes',
+      'Lens',
+      'Nantes',
+      'Strasbourg',
+      'Toulouse',
+      'Montpellier',
+    ],
+  },
+  {
+    country: 'France',
+    tier: 2,
+    name: 'Ligue 2',
+    clubs: [
+      'Saint-Étienne',
+      'Bordeaux',
+      'Guingamp',
+      'Grenoble',
+      'Amiens',
+      'Ajaccio',
+      'Laval',
+      'Troyes',
+    ],
+  },
+  {
+    country: 'Portugal',
+    tier: 1,
+    name: 'Primeira Liga',
+    clubs: [
+      'Benfica',
+      'Porto',
+      'Sporting CP',
+      'Braga',
+      'Vitória Guimarães',
+      'Boavista',
+      'Famalicão',
+      'Rio Ave',
+      'Moreirense',
+      'Casa Pia',
+      'Estoril',
+      'Arouca',
+    ],
+  },
+  {
+    country: 'Portugal',
+    tier: 2,
+    name: 'Liga Portugal 2',
+    clubs: [
+      'Feirense',
+      'Penafiel',
+      'Leixões',
+      'União de Leiria',
+      'Mafra',
+      'Torreense',
+      'Tondela',
+      'Chaves',
+    ],
+  },
+]
