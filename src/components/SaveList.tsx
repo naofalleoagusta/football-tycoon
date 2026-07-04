@@ -75,11 +75,41 @@ export function SaveList() {
       <div className="border-b-4 border-[var(--color-pitch)] pb-3">
         <h1 className="font-display text-4xl text-[var(--color-chalk)]">Football Tycoon</h1>
         <p className="mt-1 text-sm text-[var(--color-chalk-dim)]">
-          Offline career saves — stored on this device only, nothing leaves your browser.
+          Buy a real lower-division club, then run every side of it — offline, saved only on
+          this device.
         </p>
       </div>
 
-      <div className="mt-8 flex gap-2">
+      {/* Programme sheet: what the game actually is, before asking for a save name */}
+      <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t-4 border-b-4 border-[var(--color-pitch)] bg-[var(--color-surface)] px-5 py-5 sm:grid-cols-4 sm:gap-x-0">
+        {[
+          { label: 'Own the club', copy: 'Buy, sell, or bankroll a real-world team.' },
+          { label: 'Deal players', copy: 'Generated squads, real transfer haggling.' },
+          { label: 'Mind the fans', copy: 'Ticket prices and honesty keep them onside.' },
+          { label: 'Grow the ground', copy: 'Pitch, stands, and floodlights need upkeep.' },
+        ].map((item, i) => (
+          <div
+            key={item.label}
+            className={i > 0 ? 'sm:border-l sm:border-dashed sm:border-[var(--color-line)] sm:pl-5' : ''}
+          >
+            <div className="font-display led-amber text-sm leading-none">{item.label}</div>
+            <p className="mt-1.5 text-xs leading-snug text-[var(--color-chalk-dim)]">
+              {item.copy}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-4 text-xs text-[var(--color-chalk-dim)]">
+        Real clubs, top flight + a second tier, across{' '}
+        <span className="text-[var(--color-chalk)]">
+          England · Spain · Italy · France · Portugal
+        </span>
+        . Players are generated.
+      </p>
+
+      <h2 className="font-display mt-10 text-lg text-[var(--color-chalk)]">Start a career</h2>
+      <div className="mt-3 flex gap-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -95,7 +125,10 @@ export function SaveList() {
         </button>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {saves.length > 0 && (
+        <h2 className="font-display mt-10 text-lg text-[var(--color-chalk)]">Continue a career</h2>
+      )}
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {saves.map((save, i) => (
           <TicketCard
             key={save.id}
