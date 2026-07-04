@@ -2,9 +2,29 @@ import { useMemo, useState } from 'react'
 import type { Club, Player, PlayerPosition } from '../types/models'
 import { computeOverall } from '../data/playerGen'
 import { PlayerDetailPanel } from './PlayerDetailPanel'
+import { SortableTh } from './SortableTh'
 
 const POSITIONS: (PlayerPosition | 'All')[] = ['All', 'GK', 'DEF', 'MID', 'FWD']
 const PAGE_SIZE = 25
+
+type SortKey = 'name' | 'club' | 'pos' | 'age' | 'overall' | 'value'
+
+function sortValue(player: Player, key: SortKey, clubsById: Map<string, Club>): string | number {
+  switch (key) {
+    case 'name':
+      return `${player.firstName} ${player.lastName}`
+    case 'club':
+      return player.clubId ? (clubsById.get(player.clubId)?.name ?? '') : 'Free Agent'
+    case 'pos':
+      return player.position
+    case 'age':
+      return player.age
+    case 'overall':
+      return computeOverall(player.attributes)
+    case 'value':
+      return player.value
+  }
+}
 
 function parseBound(raw: string): number | null {
   if (raw.trim() === '') return null
@@ -31,6 +51,8 @@ export function TransferMarket({
   const [maxOverall, setMaxOverall] = useState('')
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('overall')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   const minPriceN = parseBound(minPrice)
   const maxPriceN = parseBound(maxPrice)
@@ -39,6 +61,16 @@ export function TransferMarket({
 
   function resetPage() {
     setPage(0)
+  }
+
+  function handleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('desc')
+    }
+    resetPage()
   }
 
   const filtered = useMemo(() => {
@@ -51,8 +83,13 @@ export function TransferMarket({
         const overall = computeOverall(p.attributes)
         return (minOverallN === null || overall >= minOverallN) && (maxOverallN === null || overall <= maxOverallN)
       })
-      .sort((a, b) => computeOverall(b.attributes) - computeOverall(a.attributes))
-  }, [players, position, freeAgentsOnly, minPriceN, maxPriceN, minOverallN, maxOverallN])
+      .sort((a, b) => {
+        const av = sortValue(a, sortKey, clubsById)
+        const bv = sortValue(b, sortKey, clubsById)
+        const cmp = typeof av === 'string' ? av.localeCompare(bv as string) : av - (bv as number)
+        return sortDir === 'asc' ? cmp : -cmp
+      })
+  }, [players, position, freeAgentsOnly, minPriceN, maxPriceN, minOverallN, maxOverallN, sortKey, sortDir, clubsById])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageSafe = Math.min(page, pageCount - 1)
@@ -191,12 +228,12 @@ export function TransferMarket({
       <table className="mt-2 w-full text-left text-sm">
         <thead>
           <tr className="text-[10px] uppercase tracking-wide text-[var(--color-chalk-dim)]">
-            <th className="py-1.5 font-medium">Player</th>
-            <th className="py-1.5 font-medium">Club</th>
-            <th className="py-1.5 font-medium">Pos</th>
-            <th className="py-1.5 text-right font-medium">Age</th>
-            <th className="py-1.5 text-right font-medium">OVR</th>
-            <th className="font-mono-num py-1.5 text-right font-medium">Value</th>
+            <SortableTh label="Player" sortKey="name" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+            <SortableTh label="Club" sortKey="club" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+            <SortableTh label="Pos" sortKey="pos" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
+            <SortableTh label="Age" sortKey="age" activeKey={sortKey} dir={sortDir} onSort={handleSort} align="right" />
+            <SortableTh label="OVR" sortKey="overall" activeKey={sortKey} dir={sortDir} onSort={handleSort} align="right" />
+            <SortableTh label="Value" sortKey="value" activeKey={sortKey} dir={sortDir} onSort={handleSort} align="right" />
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--color-line)]">
