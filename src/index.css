@@ -1,15 +1,27 @@
 @import 'tailwindcss';
+@import '@fontsource/anton/400.css';
+@import '@fontsource/work-sans/400.css';
+@import '@fontsource/work-sans/500.css';
+@import '@fontsource/work-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
 
 @theme {
-  --color-pitch-primary: #15803d;
-  --color-pitch-secondary: #166534;
-  --color-accent: #d97706;
-  --color-background: #0f172a;
-  --color-surface: #0f1f2b;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-destructive: #dc2626;
-  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  /* Night Turf palette — stadium-under-floodlights, not startup slate */
+  --color-night: #0b1410;
+  --color-surface: #12201a;
+  --color-surface-raised: #17281f;
+  --color-chalk: #f1ede2;
+  --color-chalk-dim: #a9b3ab;
+  --color-pitch: #3e7b4f;
+  --color-pitch-deep: #234e30;
+  --color-floodlight: #ffb627;
+  --color-card-red: #e4572e;
+  --color-line: rgba(241, 237, 226, 0.14);
+
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-sans: 'Work Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 :root {
@@ -18,12 +30,65 @@
 
 body {
   margin: 0;
-  background: var(--color-background);
-  color: #ffffff;
+  background: var(--color-night);
+  background-image: radial-gradient(
+    ellipse 900px 500px at 50% -10%,
+    rgba(62, 123, 79, 0.16),
+    transparent 60%
+  );
+  color: var(--color-chalk);
   font-family: var(--font-sans);
-  font-variant-numeric: tabular-nums;
 }
 
 #root {
   min-height: 100svh;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.led-amber {
+  color: var(--color-floodlight);
+  text-shadow: 0 0 12px rgba(255, 182, 39, 0.35);
+}
+
+/* Ticket stub: dashed tear-line with punched notches, like a physical
+   matchday ticket — this is the app's one signature motif. */
+.ticket-stub-divider {
+  position: relative;
+  border-left: 2px dashed var(--color-line);
+}
+
+.ticket-stub-divider::before,
+.ticket-stub-divider::after {
+  content: '';
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-night);
+}
+
+.ticket-stub-divider::before {
+  top: -9px;
+}
+
+.ticket-stub-divider::after {
+  bottom: -9px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .transition-standard {
+    transition: all 150ms ease-out;
+  }
 }
