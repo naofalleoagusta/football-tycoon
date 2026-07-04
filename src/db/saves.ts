@@ -48,12 +48,13 @@ export async function createSave(name: string): Promise<SaveGame> {
 
   await db.transaction(
     'rw',
-    [db.saves, db.leagues, db.clubs, db.stadiums],
+    [db.saves, db.leagues, db.clubs, db.stadiums, db.players],
     async () => {
       await db.saves.add(save)
       await db.leagues.bulkAdd(world.leagues)
       await db.clubs.bulkAdd(world.clubs)
       await db.stadiums.bulkAdd(world.stadiums)
+      await db.players.bulkAdd(world.players)
     },
   )
 

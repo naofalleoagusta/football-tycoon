@@ -58,6 +58,7 @@ export interface Player {
   wage: number
   value: number
   contractYears: number
+  morale: number // 0-100, baseline happiness — no match sim yet to move it
 }
 
 export interface Transfer {

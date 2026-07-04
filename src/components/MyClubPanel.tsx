@@ -1,21 +1,5 @@
 import type { Club, Stadium } from '../types/models'
-
-function StatBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="flex justify-between text-[10px] uppercase tracking-wide text-[var(--color-chalk-dim)]">
-        <span>{label}</span>
-        <span className="font-mono-num">{value}</span>
-      </div>
-      <div className="mt-1 h-1.5 rounded-full bg-black/30">
-        <div
-          className="h-full rounded-full bg-[var(--color-pitch)]"
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  )
-}
+import { StatBar } from './StatBar'
 
 export function MyClubPanel({
   club,

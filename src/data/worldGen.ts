@@ -1,12 +1,14 @@
 import { nanoid } from 'nanoid'
-import type { Club, League, LeagueTier, Stadium } from '../types/models'
+import type { Club, League, LeagueTier, Player, Stadium } from '../types/models'
 import { mulberry32 } from '../lib/rng'
 import { LEAGUE_SEEDS } from './clubSeed'
+import { generateSquad } from './playerGen'
 
 export interface GeneratedWorld {
   leagues: League[]
   clubs: Club[]
   stadiums: Stadium[]
+  players: Player[]
 }
 
 interface TierRange {
@@ -77,6 +79,7 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
   const leagues: League[] = []
   const clubs: Club[] = []
   const stadiums: Stadium[] = []
+  const players: Player[] = []
 
   for (const leagueSeed of LEAGUE_SEEDS) {
     const league: League = {
@@ -124,8 +127,10 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
         pitchQuality: fromPrestige(rng, prestige, range.pitchQuality),
         facilityQuality: fromPrestige(rng, prestige, range.facilityQuality),
       })
+
+      players.push(...generateSquad(rng, saveId, clubId, leagueSeed.country, leagueSeed.tier))
     }
   }
 
-  return { leagues, clubs, stadiums }
+  return { leagues, clubs, stadiums, players }
 }

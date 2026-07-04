@@ -9,7 +9,7 @@ import {
   loadSaveBundle,
   type SaveBundle,
 } from '../db/saves'
-import { buyClub, sellClub } from '../db/transactions'
+import { buyClub, releasePlayer, sellClub, signPlayer } from '../db/transactions'
 
 interface GameState {
   saves: SaveGame[]
@@ -25,6 +25,8 @@ interface GameState {
   importSave: (json: string) => Promise<void>
   buyClub: (clubId: string) => Promise<void>
   sellClub: () => Promise<void>
+  signPlayer: (playerId: string) => Promise<void>
+  releasePlayer: (playerId: string) => Promise<void>
   clearError: () => void
 }
 
@@ -72,30 +74,36 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   buyClub: async (clubId: string) => {
-    const saveId = get().activeBundle?.save.id
-    if (!saveId) return
-    try {
-      await buyClub(saveId, clubId)
-      const bundle = await loadSaveBundle(saveId)
-      set({ activeBundle: bundle ?? null, error: null })
-      await get().refreshSaves()
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : String(err) })
-    }
+    await runTransaction(get, (saveId) => buyClub(saveId, clubId))
   },
 
   sellClub: async () => {
-    const saveId = get().activeBundle?.save.id
-    if (!saveId) return
-    try {
-      await sellClub(saveId)
-      const bundle = await loadSaveBundle(saveId)
-      set({ activeBundle: bundle ?? null, error: null })
-      await get().refreshSaves()
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : String(err) })
-    }
+    await runTransaction(get, (saveId) => sellClub(saveId))
+  },
+
+  signPlayer: async (playerId: string) => {
+    await runTransaction(get, (saveId) => signPlayer(saveId, playerId))
+  },
+
+  releasePlayer: async (playerId: string) => {
+    await runTransaction(get, (saveId) => releasePlayer(saveId, playerId))
   },
 
   clearError: () => set({ error: null }),
 }))
+
+async function runTransaction(
+  get: () => GameState,
+  action: (saveId: string) => Promise<void>,
+): Promise<void> {
+  const saveId = get().activeBundle?.save.id
+  if (!saveId) return
+  try {
+    await action(saveId)
+    const bundle = await loadSaveBundle(saveId)
+    useGameStore.setState({ activeBundle: bundle ?? null, error: null })
+    await get().refreshSaves()
+  } catch (err) {
+    useGameStore.setState({ error: err instanceof Error ? err.message : String(err) })
+  }
+}
