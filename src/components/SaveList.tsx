@@ -75,8 +75,7 @@ export function SaveList() {
       <div className="border-b-4 border-[var(--color-pitch)] pb-3">
         <h1 className="font-display text-4xl text-[var(--color-chalk)]">Football Tycoon</h1>
         <p className="mt-1 text-sm text-[var(--color-chalk-dim)]">
-          Buy a real lower-division club, then run every side of it — offline, saved only on
-          this device.
+          Buy a real lower-division club, then run every side of it.
         </p>
       </div>
 
@@ -101,7 +100,7 @@ export function SaveList() {
       </div>
 
       <p className="mt-4 text-xs text-[var(--color-chalk-dim)]">
-        Real clubs, top flight + a second tier, across{' '}
+        Real clubs, four divisions deep, across{' '}
         <span className="text-[var(--color-chalk)]">
           England · Spain · Italy · France · Portugal
         </span>

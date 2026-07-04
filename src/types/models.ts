@@ -1,4 +1,4 @@
-export type LeagueTier = 1 | 2
+export type LeagueTier = 1 | 2 | 3 | 4
 
 export type Country = 'England' | 'Spain' | 'Italy' | 'France' | 'Portugal'
 

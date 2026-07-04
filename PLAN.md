@@ -42,7 +42,7 @@ Football management games (Football Manager, Out of the Park) read as *editorial
 ### Phase 0 — Foundation
 - Repo scaffold: Vite + React + TS + Tailwind + Dexie, PWA plugin wired (offline shell works from day one).
 - Data model (TS types + Dexie schema/tables): Club, League, Player, Transfer, LedgerEntry, Stadium, FanMood, SaveGame.
-- Seed dataset: top-flight + a couple lower tiers for **England, Spain, Italy, France, Portugal** (real club names, country, league tier, base reputation/finances) — curated JSON bundled with the app, expandable later.
+- Seed dataset: 4 tiers deep for **England, Spain, Italy, France, Portugal** (real club names, country, league tier, base reputation/finances) — curated JSON bundled with the app, expandable later.
 - Local save system: create/load/delete save slots in IndexedDB, JSON export/import for backup.
 
 ### Phase 1 — Club Ownership Core
@@ -85,5 +85,5 @@ Football management games (Football Manager, Out of the Park) read as *editorial
 
 ## Decisions Locked
 - Persistence: client-only, IndexedDB (Dexie), offline-first PWA. No server/hosted DB.
-- League scope: top 5 leagues — England, Spain, Italy, France, Portugal — top flight + a couple lower tiers each, for promotion/relegation and affordable starter clubs.
+- League scope: top 5 leagues — England, Spain, Italy, France, Portugal — 4 tiers deep each, for promotion/relegation and affordable starter clubs at the bottom.
 - Match sim depth: pure stat roll. Squad rating + tactic modifier + pitch/fatigue/fan modifiers → weighted random roll for score. No possession/event-by-event simulation.
