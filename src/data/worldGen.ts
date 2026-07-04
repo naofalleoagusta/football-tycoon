@@ -80,6 +80,7 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
   const clubs: Club[] = []
   const stadiums: Stadium[] = []
   const players: Player[] = []
+  const usedNames = new Set<string>()
 
   for (const leagueSeed of LEAGUE_SEEDS) {
     const league: League = {
@@ -128,7 +129,9 @@ export function generateWorld(saveId: string, seed: number): GeneratedWorld {
         facilityQuality: fromPrestige(rng, prestige, range.facilityQuality),
       })
 
-      players.push(...generateSquad(rng, saveId, clubId, leagueSeed.country, leagueSeed.tier))
+      players.push(
+        ...generateSquad(rng, saveId, clubId, leagueSeed.country, leagueSeed.tier, usedNames),
+      )
     }
   }
 

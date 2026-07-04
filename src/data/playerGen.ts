@@ -65,16 +65,56 @@ function potentialFor(rng: () => number, overall: number, age: number): number {
 
 export type GeneratedPlayer = Omit<Player, 'id' | 'saveId' | 'clubId'>
 
+/** Picks a first/last name not already in use this save. Tries the
+ *  nationality's own pool, then all pools combined, then finally
+ *  disambiguates with a numeric suffix — so duplicates can't happen even
+ *  once name pools run dry across ~1,800 generated players. */
+function pickUniqueName(
+  rng: () => number,
+  nationality: Country,
+  usedNames: Set<string>,
+): { firstName: string; lastName: string } {
+  const pool = NAME_POOLS[nationality]
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const firstName = pickOne(rng, pool.first)
+    const lastName = pickOne(rng, pool.last)
+    const full = `${firstName} ${lastName}`
+    if (!usedNames.has(full)) {
+      usedNames.add(full)
+      return { firstName, lastName }
+    }
+  }
+
+  const allFirst = COUNTRIES.flatMap((c) => NAME_POOLS[c].first)
+  const allLast = COUNTRIES.flatMap((c) => NAME_POOLS[c].last)
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const firstName = pickOne(rng, allFirst)
+    const lastName = pickOne(rng, allLast)
+    const full = `${firstName} ${lastName}`
+    if (!usedNames.has(full)) {
+      usedNames.add(full)
+      return { firstName, lastName }
+    }
+  }
+
+  const firstName = pickOne(rng, pool.first)
+  const baseLast = pickOne(rng, pool.last)
+  let suffix = 2
+  while (usedNames.has(`${firstName} ${baseLast} ${suffix}`)) suffix++
+  const lastName = `${baseLast} ${suffix}`
+  usedNames.add(`${firstName} ${lastName}`)
+  return { firstName, lastName }
+}
+
 function generatePlayer(
   rng: () => number,
   position: PlayerPosition,
   clubCountry: Country,
   tier: LeagueTier,
+  usedNames: Set<string>,
 ): GeneratedPlayer {
   const nationality = rng() < 0.7 ? clubCountry : pickOne(rng, COUNTRIES)
-  const pool = NAME_POOLS[nationality]
-  const firstName = pickOne(rng, pool.first)
-  const lastName = pickOne(rng, pool.last)
+  const { firstName, lastName } = pickUniqueName(rng, nationality, usedNames)
 
   const [skillMin, skillMax] = TIER_SKILL_RANGE[tier]
   const profile = POSITION_PROFILE[position]
@@ -113,11 +153,12 @@ export function generateSquad(
   clubId: string,
   clubCountry: Country,
   tier: LeagueTier,
+  usedNames: Set<string>,
 ): Player[] {
   return SQUAD_TEMPLATE.map((position) => ({
     id: nanoid(),
     saveId,
     clubId,
-    ...generatePlayer(rng, position, clubCountry, tier),
+    ...generatePlayer(rng, position, clubCountry, tier, usedNames),
   }))
 }

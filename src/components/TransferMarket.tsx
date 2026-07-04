@@ -4,7 +4,13 @@ import { computeOverall } from '../data/playerGen'
 import { PlayerDetailPanel } from './PlayerDetailPanel'
 
 const POSITIONS: (PlayerPosition | 'All')[] = ['All', 'GK', 'DEF', 'MID', 'FWD']
-const RESULT_LIMIT = 30
+const PAGE_SIZE = 25
+
+function parseBound(raw: string): number | null {
+  if (raw.trim() === '') return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
 
 export function TransferMarket({
   players,
@@ -18,21 +24,43 @@ export function TransferMarket({
   onSign: (playerId: string) => void
 }) {
   const [position, setPosition] = useState<PlayerPosition | 'All'>('All')
-  const [query, setQuery] = useState('')
   const [freeAgentsOnly, setFreeAgentsOnly] = useState(false)
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [minOverall, setMinOverall] = useState('')
+  const [maxOverall, setMaxOverall] = useState('')
+  const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
+  const minPriceN = parseBound(minPrice)
+  const maxPriceN = parseBound(maxPrice)
+  const minOverallN = parseBound(minOverall)
+  const maxOverallN = parseBound(maxOverall)
+
+  function resetPage() {
+    setPage(0)
+  }
+
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
     return players
       .filter((p) => position === 'All' || p.position === position)
       .filter((p) => !freeAgentsOnly || p.clubId === null)
-      .filter((p) => !q || `${p.firstName} ${p.lastName}`.toLowerCase().includes(q))
+      .filter((p) => minPriceN === null || p.value >= minPriceN)
+      .filter((p) => maxPriceN === null || p.value <= maxPriceN)
+      .filter((p) => {
+        const overall = computeOverall(p.attributes)
+        return (minOverallN === null || overall >= minOverallN) && (maxOverallN === null || overall <= maxOverallN)
+      })
       .sort((a, b) => computeOverall(b.attributes) - computeOverall(a.attributes))
-  }, [players, position, query, freeAgentsOnly])
+  }, [players, position, freeAgentsOnly, minPriceN, maxPriceN, minOverallN, maxOverallN])
 
-  const visible = filtered.slice(0, RESULT_LIMIT)
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageSafe = Math.min(page, pageCount - 1)
+  const visible = filtered.slice(pageSafe * PAGE_SIZE, pageSafe * PAGE_SIZE + PAGE_SIZE)
   const selected = visible.find((p) => p.id === selectedId)
+
+  const inputClass =
+    'w-20 rounded border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-chalk)] placeholder:text-[var(--color-chalk-dim)] focus:border-[var(--color-pitch)] focus:outline-none'
 
   return (
     <div className="mt-6">
@@ -40,18 +68,15 @@ export function TransferMarket({
         Transfer Market
       </h2>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search player name"
-          className="rounded border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs text-[var(--color-chalk)] placeholder:text-[var(--color-chalk-dim)] focus:border-[var(--color-pitch)] focus:outline-none"
-        />
+      <div className="mt-3 flex flex-wrap items-end gap-4">
         <div className="flex gap-1">
           {POSITIONS.map((p) => (
             <button
               key={p}
-              onClick={() => setPosition(p)}
+              onClick={() => {
+                setPosition(p)
+                resetPage()
+              }}
               className={`transition-standard cursor-pointer rounded border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                 position === p
                   ? 'border-[var(--color-pitch)] bg-[var(--color-pitch)] text-[var(--color-night)]'
@@ -62,19 +87,106 @@ export function TransferMarket({
             </button>
           ))}
         </div>
-        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-[var(--color-chalk-dim)]">
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-[var(--color-chalk-dim)]">
+            Price range
+          </div>
+          <div className="mt-1 flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              value={minPrice}
+              onChange={(e) => {
+                setMinPrice(e.target.value)
+                resetPage()
+              }}
+              placeholder="Min"
+              className={inputClass}
+            />
+            <span className="text-[var(--color-chalk-dim)]">–</span>
+            <input
+              type="number"
+              min={0}
+              value={maxPrice}
+              onChange={(e) => {
+                setMaxPrice(e.target.value)
+                resetPage()
+              }}
+              placeholder="Max"
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-[var(--color-chalk-dim)]">
+            Overall range
+          </div>
+          <div className="mt-1 flex items-center gap-1">
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={minOverall}
+              onChange={(e) => {
+                setMinOverall(e.target.value)
+                resetPage()
+              }}
+              placeholder="Min"
+              className={inputClass}
+            />
+            <span className="text-[var(--color-chalk-dim)]">–</span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={maxOverall}
+              onChange={(e) => {
+                setMaxOverall(e.target.value)
+                resetPage()
+              }}
+              placeholder="Max"
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <label className="mb-1.5 flex cursor-pointer items-center gap-1.5 text-xs text-[var(--color-chalk-dim)]">
           <input
             type="checkbox"
             checked={freeAgentsOnly}
-            onChange={(e) => setFreeAgentsOnly(e.target.checked)}
+            onChange={(e) => {
+              setFreeAgentsOnly(e.target.checked)
+              resetPage()
+            }}
           />
           Free agents only
         </label>
       </div>
 
-      <p className="mt-2 text-[10px] text-[var(--color-chalk-dim)]">
-        Showing {visible.length} of {filtered.length} matching players
-      </p>
+      <div className="mt-3 flex items-center justify-between text-[10px] text-[var(--color-chalk-dim)]">
+        <span>{filtered.length} matching players</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={pageSafe === 0}
+            className="transition-standard cursor-pointer rounded border border-[var(--color-line)] px-2 py-1 font-semibold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Prev
+          </button>
+          <span>
+            Page {pageSafe + 1} of {pageCount}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={pageSafe >= pageCount - 1}
+            className="transition-standard cursor-pointer rounded border border-[var(--color-line)] px-2 py-1 font-semibold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       <table className="mt-2 w-full text-left text-sm">
         <thead>
